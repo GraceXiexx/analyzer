@@ -615,8 +615,8 @@ Bool_t SinglelepAnalyzer::Process(Long64_t entry)
         channel = "e";
         eventCounts[channel]->Fill(1);
 
-        // pass pt threshold
-        if (electrons[0]->pt<32)
+        // pass pt threshol
+        if (electrons[0]->pt<32 && electrons[1]->pt<15)
             return kTRUE;
         eventCounts[channel]->Fill(2);
 
