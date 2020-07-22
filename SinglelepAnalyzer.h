@@ -123,6 +123,12 @@ public:
     bool leptonOneIsoPass;
 
 
+    //nPhotons
+
+    TLorentzVector photonP4;
+    UInt_t nPhotons;
+    Float_t photonMVA;
+
 
     // ht
     Float_t htSum, ht, htPhi;

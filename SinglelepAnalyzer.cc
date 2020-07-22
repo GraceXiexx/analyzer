@@ -147,15 +147,14 @@ void SinglelepAnalyzer::Begin(TTree *tree)
         tree->Branch("met", &met);
         tree->Branch("metPhi", &metPhi);
 
-//        tree->Branch("photonP4", &photonP4);
+        tree->Branch("photonP4", &photonP4);
 
         // object counters
         tree->Branch("nMuons", &nMuons);
         tree->Branch("nElectrons", &nElectrons);
-//        tree->Branch("nPhotons", &nPhotons);
         tree->Branch("nJets", &nJets);
         tree->Branch("nBJets", &nBJets);
-//        tree->Branch("nPhotons", &nPhotons);
+        tree->Branch("nPhotons", &nPhotons);
 
         outTrees[channel] = tree;
         // event counter
@@ -477,7 +476,7 @@ Bool_t SinglelepAnalyzer::Process(Long64_t entry)
 
     
     /* -------- PHOTONS --------  */
-/*    vector <TPhoton*> photons;
+    vector <TPhoton*> photons;
     vector<TLorentzVector> veto_photons;
     for (int i=0; i<fPhotonArr->GetEntries(); i++) {
         TPhoton* photon = (TPhoton*) fPhotonArr->At(i);    
@@ -518,7 +517,8 @@ Bool_t SinglelepAnalyzer::Process(Long64_t entry)
     } 
     sort(photons.begin(), photons.end(), sort_by_higher_pt<TPhoton>);
 
-    nPhotons = photons.size();    */
+    nPhotons = photons.size();
+
 
 
     /* -------- JETS ---------*/
@@ -568,6 +568,14 @@ Bool_t SinglelepAnalyzer::Process(Long64_t entry)
             }
         }
 
+        bool photonOverlap = false;
+        for (const auto& photon: veto_photons) {
+            if (jetP4.DeltaR(photon) < 0.4) {
+                photonOverlap = true;
+                break;
+            }
+        }
+
 
         // save good jets
         if (
@@ -576,6 +584,7 @@ Bool_t SinglelepAnalyzer::Process(Long64_t entry)
                 && particleSelector->PassJetID(jet, cuts->looseJetID)
                 && !muOverlap 
                 && !elOverlap
+                && !photonOverlap
             ) {
 
             jets.push_back(jet);
@@ -625,9 +634,10 @@ Bool_t SinglelepAnalyzer::Process(Long64_t entry)
             return kTRUE;
         eventCounts[channel]->Fill(3);
 
-        //nPhotons
-//       if (nPhotons!=1)
-//            return kTRUE;
+       if (nPhotons == 0)
+            return kTRUE;
+        //eventCounts[channel]->Fill(4);
+
 
         // nJets
         if (nJets<4)
@@ -654,6 +664,16 @@ Bool_t SinglelepAnalyzer::Process(Long64_t entry)
         if (!separation)
             return kTRUE;
         eventCounts[channel]->Fill(5);
+
+
+        TLorentzVector photonOneP4;
+        photonP4 = photonOneP4;
+        photonMVA = 0;
+        if (nPhotons > 0) {
+            photonOneP4.SetPtEtaPhiM(photons[0]->pt, photons[0]->eta, photons[0]->phi, 0.);
+            photonP4 = photonOneP4;
+            photonMVA = photons[0]->mva;
+        }
 
 
         // mt cut
@@ -704,6 +724,10 @@ Bool_t SinglelepAnalyzer::Process(Long64_t entry)
             triggerWeight = effs.first/effs.second;
             triggerVar    = pow(triggerWeight, 2)*(pow(errs.first/effs.first, 2) + pow(errs.second/effs.second, 2));
             eventWeight *= triggerWeight;
+
+            if (nPhotons > 0) {
+                eventWeight *= weights->GetPhotonMVAIdEff(*photons[0]);
+            }
         }
 
     } else if (nMuons == 1) { // mu selection
