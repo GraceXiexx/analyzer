@@ -630,7 +630,7 @@ Bool_t SinglelepAnalyzer::Process(Long64_t entry)
 //            return kTRUE;
 
         // nJets
-        if (nJets==0)
+        if (nJets<4)
             return kTRUE;
         eventCounts[channel]->Fill(4);
 
