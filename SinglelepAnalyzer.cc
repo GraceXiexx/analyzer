@@ -610,7 +610,7 @@ Bool_t SinglelepAnalyzer::Process(Long64_t entry)
 
     hTotalEvents->Fill(7);
     string channel = "";
-    if (nElectrons == 1) { // e selection
+    if (nElectrons == 2) { // e selection
 
         channel = "e";
         eventCounts[channel]->Fill(1);
